@@ -29,6 +29,27 @@ if (navigator.geolocation) {
           '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
       var marker = L.marker(coords).addTo(map);
+
+      // we want the coordinates of the when user clicked on the map
+
+      map.on('click', function (mapEvent) {
+        //console.log(mapEvent);
+
+        const { lat, lng } = mapEvent.latlng;
+
+        L.marker([lat, lng])
+          .addTo(map)
+          .bindPopup(
+            L.popup({
+              maxWidth: 250,
+              minWidth: 100,
+              autoClose: false,
+              className: 'running-popup',
+              content: 'new workout',
+            }),
+          )
+          .openPopup();
+      });
     },
     function () {
       alert('Could not find the location');
