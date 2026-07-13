@@ -146,6 +146,7 @@ class App {
     };
 
     //get the data from the user
+    // this is the basic how we enter
     const type = inputType.value; //running , cycling
     const distance = +inputDistance.value;
     const duration = +inputDuration.value;
