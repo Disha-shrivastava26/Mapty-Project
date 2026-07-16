@@ -3,6 +3,7 @@
 class Workout {
   date = new Date();
   id = (new Date() + '').slice(-10);
+  clicks = 0;
 
   constructor(coords, distance, duration) {
     this.coords = coords; //[lat,lng]
@@ -16,6 +17,10 @@ class Workout {
   'September', 'October', 'November', 'December'];
 
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${this.date.getDate()}`;
+  }
+
+  click() {
+    this.clicks++;
   }
 }
 
@@ -72,13 +77,23 @@ class App {
   //private fields
 
   #map;
+  #ZoomLevel = 13;
   #mapEvent;
   #workouts = [];
 
   constructor() {
+    //get user position
     this._getPosition();
+
+    // get the local storage
+    this._getLocalStorage();
+
+    // start these functin
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    // we want to put a event listener on the container just it show the marker on  the map
+
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   _getPosition() {
@@ -98,7 +113,7 @@ class App {
     console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
 
     const coords = [latitude, longitude];
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#ZoomLevel);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
@@ -109,6 +124,10 @@ class App {
     // we want the coordinates of the when user clicked on the map
 
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(work => {
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -198,9 +217,10 @@ class App {
     this._hideform();
 
     //display marker on enter
-    // //console.log(mapEvent);
-
     this._renderWorkoutMarker(workout);
+
+    //set local storage to all workouts
+    this._setLocalStorage();
   }
   _renderWorkoutMarker(workout) {
     L.marker(workout.coords)
@@ -264,6 +284,48 @@ class App {
     // we are attaching as sibling here
 
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  _moveToPopup(e) {
+    const workoutEl = e.target.closest('.workout');
+
+    if (!workoutEl) return;
+
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id,
+    );
+
+    this.#map.setView(workout.coords, this.#ZoomLevel, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
+
+    //workout.click();
+  }
+
+  _setLocalStorage() {
+    // we are localstorage API only used for small amount of data
+    localStorage.setItem('workout', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workout'));
+    console.log(data);
+
+    if (!data) return;
+
+    this.#workouts = data;
+
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    });
+  }
+
+  reset() {
+    localStorage.removeItem('workout');
+    location.reset(); // browers object
   }
 }
 
